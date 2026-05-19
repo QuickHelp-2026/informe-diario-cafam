@@ -812,11 +812,24 @@ function filterBuild() {
     FILTERED = RAW;
   } else {
     // Try both 'BOGOTA'/'NACIONAL' and partial matches against CR column
-    const key = selectedType === 'bogota' ? 'BOGOTA' : 'NACIONAL';
     FILTERED = RAW.filter(r => {
-      const v = (r[COL.op] || '').toString().trim().toUpperCase();
-      return v.includes(key) || v === key;
-    });
+  const v = (r[COL.op] || '')
+    .toString()
+    .trim()
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+  if (selectedType === 'bogota') {
+    return v.includes('BOGOTA');
+  }
+
+  if (selectedType === 'nacional') {
+    return !v.includes('BOGOTA');
+  }
+
+  return true;
+});
     // If filter returned nothing, use all data and warn
     if (!FILTERED.length) {
       console.warn('No rows matched operation filter "' + key + '", showing all data. Sample CR values:', [...new Set(RAW.slice(0,20).map(r => r[COL.op]))]);
